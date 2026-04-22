@@ -5,16 +5,19 @@ pipeline {
         maven 'Maven3'
     }
     stages {
-        stage('Build & Test with Coverage') {
+        stage('Build & Test') {
             steps {
                 script {
-                    // This finds the base extraction folder
-                    def home = tool 'JDK17'
+                    // Get the path where Jenkins extracted JDK17
+                    def jdkHome = tool 'JDK17'
                     
-                    // We force the PATH to include the bin folder explicitly
-                    withEnv(["JAVA_HOME=${home}", "PATH+JDK=${home}\\bin"]) {
-                        // This 'where' command helps us debug in the logs
-                        bat 'where javac' 
+                    // Force JAVA_HOME and put the NEW bin folder at the VERY START of the PATH
+                    withEnv([
+                        "JAVA_HOME=${jdkHome}",
+                        "PATH=${jdkHome}\\bin;${env.PATH}"
+                    ]) {
+                        // This should now show the path inside your Jenkins workspace
+                        bat 'where javac'
                         bat 'mvn clean test'
                     }
                 }
