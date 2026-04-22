@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        // Names must match your Jenkins Global Tool Configuration
+        // This must match the name you gave the JDK in Global Tool Configuration
         jdk 'JDK17'
         maven 'Maven3'
     }
@@ -10,28 +10,31 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Pulls the latest code from your GitHub repo
                 checkout scm
             }
         }
 
         stage('Build & Test with Coverage') {
             steps {
-                // 'bat' is used for Windows command line
-                // 'mvn clean test' triggers both JUnit and JaCoCo
-                bat 'mvn clean test'
+                script {
+                    // This dynamically finds the path where Jenkins extracted the JDK
+                    def jdkPath = tool 'JDK17'
+                    
+                    // We manually set JAVA_HOME and add the bin folder to the PATH
+                    withEnv(["JAVA_HOME=${jdkPath}", "PATH+JDK=${jdkPath}\\bin"]) {
+                        bat 'mvn clean test'
+                    }
+                }
             }
         }
     }
 
     post {
         always {
-            // 1. Records JUnit results. 
-            // allowEmptyResults: true prevents build failure if no tests run
+            // Records JUnit results
             junit testResults: '**/target/surefire-reports/*.xml', allowEmptyResults: true
             
-            // 2. Archives the JaCoCo HTML reports for analysis
-            // allowEmptyArchive: true ensures the pipeline finishes even if reports are missing
+            // Archives JaCoCo reports
             archiveArtifacts artifacts: 'target/site/jacoco/**', allowEmptyArchive: true
         }
     }
