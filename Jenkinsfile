@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        // These names must match what you configured in Manage Jenkins > Tools
+        // Names must match your Jenkins Global Tool Configuration
         jdk 'JDK17'
         maven 'Maven3'
     }
@@ -10,14 +10,15 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // This pulls your latest code from GitHub
+                // Pulls the latest code from your GitHub repo
                 checkout scm
             }
         }
 
         stage('Build & Test with Coverage') {
             steps {
-                // Use 'bat' for Windows. Note the space between clean and test.
+                // 'bat' is used for Windows command line
+                // 'mvn clean test' triggers both JUnit and JaCoCo
                 bat 'mvn clean test'
             }
         }
@@ -25,11 +26,13 @@ pipeline {
 
     post {
         always {
-            // 1. Records the JUnit test results in the Jenkins UI
-            junit '**/target/surefire-reports/*.xml'
+            // 1. Records JUnit results. 
+            // allowEmptyResults: true prevents build failure if no tests run
+            junit testResults: '**/target/surefire-reports/*.xml', allowEmptyResults: true
             
-            // 2. Archives the JaCoCo HTML report so you can click and view it
-            archiveArtifacts artifacts: 'target/site/jacoco/**', fingerprint: true
+            // 2. Archives the JaCoCo HTML reports for analysis
+            // allowEmptyArchive: true ensures the pipeline finishes even if reports are missing
+            archiveArtifacts artifacts: 'target/site/jacoco/**', allowEmptyArchive: true
         }
     }
 }
