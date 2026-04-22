@@ -8,16 +8,17 @@ pipeline {
         stage('Build & Test') {
             steps {
                 script {
-                    // Get the path where Jenkins extracted JDK17
+                    // 1. Get the base extraction folder
                     def jdkHome = tool 'JDK17'
                     
-                    // Force JAVA_HOME and put the NEW bin folder at the VERY START of the PATH
+                    // 2. Set the environment and FORCE the path
+                    // We use the full path to the bin folder to stop the Oracle error
                     withEnv([
                         "JAVA_HOME=${jdkHome}",
                         "PATH=${jdkHome}\\bin;${env.PATH}"
                     ]) {
-                        // This should now show the path inside your Jenkins workspace
-                        bat 'where javac'
+                        // Debugging: This will show us if we successfully bypassed Oracle
+                        bat 'javac -version'
                         bat 'mvn clean test'
                     }
                 }
